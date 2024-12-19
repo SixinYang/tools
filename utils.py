@@ -120,8 +120,10 @@ class TelnetExecute(RemoteExecute):
 class PowerControl:
     def __init__(self, args, unknown_args):
         parser = argparse.ArgumentParser(description='Power Control')
+        parser.add_argument('operation', choices=["on", "off"], help='on/off')
         parser.add_argument('--device', help='tty device to control')
         parser.add_argument('--device_port', help='power port to control')
+        parser.prog = parser.prog + " " + args.target
         self_args = parser.parse_args(unknown_args)
 
         args.device = self_args.device if self_args.device else args.device
@@ -132,7 +134,7 @@ class PowerControl:
             self.remote = None
         else:
             self.remote = SSHExecute(args.host, args.port, args.username, args.password)
-        self.opcode = args.operation
+        self.opcode = self_args.operation
         self.target = args.target
 
     def execute(self):
@@ -140,31 +142,45 @@ class PowerControl:
         if self.remote:
             self.remote.transfer_file(__file__, f'/tmp/{filename}')
             self.remote.execute_command(f"chmod +x /tmp/{filename}")
-            self.remote.execute_command(f"/tmp/{filename} {self.target} {' '.join(self.opcode)} --device {self.power.dev} --device_port {self.power.port}")
+            self.remote.execute_command(f"/tmp/{filename} {self.target} {self.opcode} --device {self.power.dev} --device_port {self.power.port}")
         else:
-            self.power.switch(self.opcode[0])
+            self.power.switch(self.opcode)
         
 
 class CPControl:
     def __init__(self, args, unknown_args):
+        parser = argparse.ArgumentParser(description='CP Control')
+        sub_parsers = parser.add_subparsers(dest='operation', help='operation')
+        run_parser = sub_parsers.add_parser('run', help='run commands')
+        run_parser.add_argument('commands', nargs='+', help='commands to run')
+        upgrade_parser = sub_parsers.add_parser('upgrade', help='upgrade firmware')
+        upgrade_parser.add_argument('filename', help='firmware file')
+        upgrade_parser.add_argument('bank', help='bank to upgrade')
+
+        parser.prog = parser.prog + " " + args.target
+        self.args = parser.parse_args(unknown_args)
+
         self.ftp_username = args.ftp_username
         self.ftp = FTPExecute(args.host, args.ftp_port, args.ftp_username, args.ftp_password)
         self.telnet = TelnetExecute(args.host, args.port, args.username, args.password)
-        self.opcode = args.operation
+        self.opcode = self.args.operation
 
     def execute(self):
-        func = getattr(self, self.opcode[0])
+        func = getattr(self, self.opcode)
         if not func:
-            raise Exception(f"Operation {self.opcode[0]} not found")
-        func(*self.opcode[1:])
+            raise Exception(f"Operation {self.opcode} not found")
+        func()
 
-    def upgrade(self, filename, bank):
+    def upgrade(self):
+        filename = self.args.filename
+        bank = self.args.bank
         basename = os.path.basename(filename)
         remote_path = f'/doc/{self.ftp_username}/{basename}'
         self.ftp.transfer_file(filename, basename)  # remote_path could not be determined by user
         self.telnet.execute_command([f"upimage {remote_path} bank{bank}", f"r{bank}"])
 
-    def run(self, *commands):
+    def run(self):
+        commands = self.args.commands
         self.telnet.execute_command('; '.join(commands))
 
 
@@ -181,7 +197,6 @@ def main():
 
     parser = argparse.ArgumentParser(description='Utils Tool')
     parser.add_argument('target', choices=["power", "cp"], help='target to perform')
-    parser.add_argument('operation', nargs="+", help='Operation to perform')
     parser.add_argument('--config', default=f'{cfg_path}', help='config file')
     parser.add_argument('--host', help='Remote host')
     parser.add_argument('--port', help='Remote port')
@@ -206,7 +221,6 @@ def main():
         pass
 
     cfg['target'] = args.target
-    cfg['operation'] = args.operation
     obj = cls(type("JsonDict", (object,), cfg), unknown_args)
     obj.execute()
 
