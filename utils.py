@@ -161,8 +161,11 @@ class CPControl:
     def upgrade(self, filename, bank):
         basename = os.path.basename(filename)
         remote_path = f'/doc/{self.ftp_username}/{basename}'
-        self.ftp.transfer_file(filename, filename)  # remote_path could not be determined by user
+        self.ftp.transfer_file(filename, basename)  # remote_path could not be determined by user
         self.telnet.execute_command([f"upimage {remote_path} bank{bank}", f"r{bank}"])
+
+    def run(self, *commands):
+        self.telnet.execute_command('; '.join(commands))
 
 
 op_map = {
