@@ -150,7 +150,7 @@ class PowerControl:
 class CPControl:
     def __init__(self, args, unknown_args):
         parser = argparse.ArgumentParser(description='CP Control')
-        sub_parsers = parser.add_subparsers(dest='operation', help='operation')
+        sub_parsers = parser.add_subparsers(dest='operation', help='operation', required=True)
         run_parser = sub_parsers.add_parser('run', help='run commands')
         run_parser.add_argument('commands', nargs='+', help='commands to run')
         upgrade_parser = sub_parsers.add_parser('upgrade', help='upgrade firmware')
