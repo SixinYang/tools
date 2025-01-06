@@ -39,12 +39,19 @@ class Cache:
             json.dump(self.data, f)
 
     @staticmethod
+    def get_value(obj, keys):
+        out = obj
+        for k in keys.split('.'):
+            out = getattr(out, k)
+        return out
+
+    @staticmethod
     def cacheit(keys):
         def decorator(func):
             def wrapper(this, *args, **kwargs):
                 global gcache
                 if isinstance(keys, list):  # get from self attributes
-                    key = '.'.join([getattr(this, k) for k in keys])
+                    key = '.'.join([Cache.get_value(this, k) for k in keys])
                 elif isinstance(keys, tuple):  # get from positional arguments
                     key = '.'.join([args[k] for k in keys])
 
@@ -196,11 +203,11 @@ class Power(Base):
 
 class Cp(Base):
     cmds = {
-        "setup_debug": "export LD_LIBRARY_PATH=/doc/OPERATOR:$LD_LIBRARY_PATH; export PATH=$PATH:/doc/OPERATOR; qconn",
+        "setup_debug": "chmod a+x /doc/OPERATOR/qconn /doc/OPERATOR/pdebug; export LD_LIBRARY_PATH=/doc/OPERATOR:$LD_LIBRARY_PATH; export PATH=$PATH:/doc/OPERATOR; qconn",
         "check_files": "ls /doc/OPERATOR|xargs",
         "kill_prog": "pm -u {pname}; pm -k {pname}",
         "run_prog": "pm -u {pname}; pm -k {pname}; export LD_LIBRARY_PATH=/doc/OPERATOR:$LD_LIBRARY_PATH; chmod a+rx /doc/OPERATOR/{target}; /doc/OPERATOR/{target} {args}",
-        "get_info": '''PID=$(pm -P|grep ###|cut -d\  -f2); NAME=$(ps -o pid,cmd|grep $PID|awk '{print $2}'); ARGS=$(ps -o pid,args|grep $PID|grep -v grep|awk '{$1=""; $2=""; print}'); echo ### $PID $NAME $ARGS'''
+        "get_info": '''PID=$(pm -P|grep "\s###\s"|cut -d\  -f2); NAME=$(ps -o pid,cmd|grep $PID|awk '{print $2}'); ARGS=$(ps -o pid,args|grep $PID|grep -v grep|awk '{$1=""; $2=""; print}'); echo ### $PID $NAME $ARGS'''
     }
 
     pname_info = {
@@ -230,6 +237,13 @@ class Cp(Base):
         self.telnet.execute_command('; '.join(commands))
 
     def setup_debug(self):
+        files = {
+            "qconn": f"{self.cfg['target_system_root']}/usr/sbin/qconn",
+            "pdebug": f"{self.cfg['target_system_root']}/usr/bin/pdebug",
+            "libtracelog.so.1": f"{self.cfg['target_system_root']}/lib/libtracelog.so.1"
+        }
+        for remote, local in files.items():
+            self.ftp.transfer_file(local, remote)
         self.telnet.execute_command(self.cmds['setup_debug'])
 
     def debug(self):
@@ -259,6 +273,7 @@ class Cp(Base):
         build = Build(self.gconfig["build"], "dep", json2obj({"program": program}), self.gconfig)
         files = build.dep()
         files.append(build.program_path)
+        files = build.strip(files)
         cmds = []
 
         # upload is too slow sometimes, so check if the file is already there
@@ -270,14 +285,13 @@ class Cp(Base):
 
 class Build(Base):
     cmds = {
-        "find_libs": "make -j16 -C {root} DEBUG=1 JDSU_PRODUCT={product} TOOLCHAIN={toolchain} src.files | grep {program} | cut -d\) -f1|cut -d\( -f2",
+        "find_libs": "make -j16 -C {root} DEBUG=1 JDSU_PRODUCT={product} TOOLCHAIN={toolchain} src.files | grep '\s{program}\s' | cut -d\) -f1|cut -d\( -f2",
     }
 
     def init(self):
         self.root = self.cfg.get("root", None)
         self.product = self.cfg.get("product", None)
         self.toolchain = self.cfg.get("toolchain", None)
-        self.program = self.args.program
         self.shell = LocalShell()
 
     def execute(self):
@@ -286,20 +300,36 @@ class Build(Base):
             raise Exception(f"Operation {self.opcode} not found")
         return func()
 
-    @Cache.cacheit(["product", "toolchain", "program"])
+    @Cache.cacheit(["product", "toolchain", "args.program"])
     def dep(self):
         if not self.root:
             raise Exception("Root path not found")
         result = self.shell.execute_command(self.cmds['find_libs'].format(root=self.root,
-            product=self.product, toolchain=self.toolchain, program=self.program))
+            product=self.product, toolchain=self.toolchain, program=self.args.program))
         libs = result.stdout.split()
         libs = ["{root}/build/{product}/{toolchain}/rootfs/opt/lumentum/lib/{lib}.1".format(root=self.root, product=self.product, toolchain=self.toolchain, lib=lib) for lib in libs]
         return libs
 
+    def strip(self, files=None):
+        if not files:
+            files = self.args.files
+        home_path = environ.get('HOME', environ.get('HOMEPATH', '/'))
+        prog = f'{self.cfg["cc_prefix"]}strip'
+        output = []
+        for file in files:
+            if not os.path.exists(file) and file.endswith(".1"):
+                os.link(os.path.join(os.path.dirname(file), f'lib{os.path.basename(file).rsplit(".1")[0]}.so'), file)
+            dst = f"{home_path}/.vi.tmp/{os.path.basename(file)}"
+            if not os.path.exists(os.path.dirname(dst)):
+                os.mkdir(os.path.dirname(dst))
+            self.shell.execute_command(f"{prog} -o {dst} {file}")
+            output.append(dst)
+        return output
+
     @property
     def program_path(self):
         return "{root}/build/{product}/{toolchain}/rootfs/opt/lumentum/bin/{program}".format(
-            root=self.root, product=self.product, toolchain=self.toolchain, program=self.program)
+            root=self.root, product=self.product, toolchain=self.toolchain, program=self.args.program)
 
 def_args = {
     "power": {
@@ -311,10 +341,12 @@ def_args = {
     "cp": {
         "run": ("commands",),   # use tuple to indicate multiple arguments
         "upgrade": ["filename", "bank"],
-        "debug": ["pname"]
+        "debug": ["pname"],
+        "setup_debug": None
     },
     "build": {
-        "dep": ["program"]
+        "dep": ["program"],
+        "strip": ("files",),
     },
 }
 
@@ -362,7 +394,7 @@ def main():
     try:
         with open(args.config) as f:
             json_config = json.load(f)
-    except Exception:
+    except Exception as e:
         json_config = {}
 
     cls = globals()[args.root_op.capitalize()]
