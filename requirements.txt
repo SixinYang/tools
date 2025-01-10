@@ -1,0 +1,4 @@
+paramiko
+ftplib
+telnetlib3
+asyncio
