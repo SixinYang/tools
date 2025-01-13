@@ -1,0 +1,81 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "(QNX) Pipe Attach",
+      "type": "cppdbg",
+      "request": "attach",
+      "program": "${input:pickFile}",
+      "MIMode": "gdb",
+      "logging": {
+        "engineLogging": true,
+        "trace": true,
+        "traceResponse": true
+      },
+      "processId": "${input:pickPID}",
+      "pipeTransport": {
+        "debuggerPath": "/media/nvme0n1p3/home/yan92617/bin/gdb.sh",
+        "pipeProgram": "/media/nvme0n1p3/home/yan92617/bin/gdb.pipe.sh",
+        "pipeArgs": ["*******", "${input:pickIP}", "${input:pickPID}"],
+        "pipeCwd": ""
+      },
+      "setupCommands": [
+        {
+          "description": "pick ELF file",
+          "text": "file ${input:pickFile}"
+        },
+        {
+          "description": "solib",
+          "text": "set solib-s ../lib"
+        },
+      ]
+    },
+    {
+      "name": "(QNX) Launch",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${input:pickFile}",
+      "MIMode": "gdb",
+      "logging": {
+        "engineLogging": true,
+        "trace": true,
+        "traceResponse": true
+      },
+      "stopAtEntry": true,
+      "miDebuggerPath": "/media/nvme0n1p3/home/yan92617/bin/gdb.launch.sh",
+      "miDebuggerArgs": "'${input:pickIP} ${input:pickFile} /media/nvme0n1p3/home/yan92617/bin/gdb.sh'",
+      "cwd": "${workspaceFolder}",
+      "setupCommands": [
+      ]
+    },
+  ],
+  "inputs": [
+    {
+      "id": "pickFile",
+      "type": "command",
+      "command": "extension.commandvariable.file.openDialog",
+      "args": {
+        "defaultUri": "${workspaceFolder}/build/rla1x5/dra821/",
+        "title": "pick target ELF file"
+      }
+    },
+    {
+      "id": "pickIP",
+      "type": "command",
+      "command": "extension.commandvariable.promptStringRemember",
+      "args": {
+        "key": "IP",
+        "description": "input target IP address"
+      }
+    },
+    {
+      "id": "pickPID",
+      "type": "command",
+      "command": "extension.commandvariable.promptStringRemember",
+      "args": {
+        "key": "PID",
+        "description": "input target PID"
+      }
+    }
+  ]
+}
