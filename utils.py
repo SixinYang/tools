@@ -215,7 +215,15 @@ class Cp(Base):
     }
 
     def init(self):
-        self.ftp = FTPExecute(self.cfg["host"], self.cfg["ftp_port"], self.cfg["ftp_username"], self.cfg["ftp_password"])
+        if not self.cfg:
+            self.cfg = {
+                "host": self.args.host,
+                "telnet_port": 23,
+                "telnet_username": self.args.telnet_username,
+                "telnet_password": self.args.telnet_password,
+            }
+        if self.cfg.get("ftp_username"):
+            self.ftp = FTPExecute(self.cfg["host"], self.cfg["ftp_port"], self.cfg["ftp_username"], self.cfg["ftp_password"])
         self.telnet = TelnetExecute(self.cfg["host"], self.cfg["telnet_port"], self.cfg["telnet_username"], self.cfg["telnet_password"])
 
     def execute(self):
@@ -342,7 +350,10 @@ def_args = {
         "run": ("commands",),   # use tuple to indicate multiple arguments
         "upgrade": ["filename", "bank"],
         "debug": ["pname"],
-        "setup_debug": None
+        "setup_debug": None,
+        "--host": None,
+        "--telnet_username": None,
+        "--telnet_password": None,
     },
     "build": {
         "dep": ["program"],
