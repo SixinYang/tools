@@ -10,7 +10,7 @@ if (( $# < 4 )); then
     exit 1
 fi
 
-UTILS="python3 $HOME/git/tools/utils.py"
+UTILS="python3 $HOME/bin/utils.py"
 PASSWORD=$1
 IP=$2
 PID=$3

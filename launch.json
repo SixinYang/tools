@@ -14,8 +14,8 @@
       },
       "processId": "${input:pickPID}",
       "pipeTransport": {
-        "debuggerPath": "/media/nvme0n1p3/home/yan92617/bin/gdb.sh",
-        "pipeProgram": "/media/nvme0n1p3/home/yan92617/bin/gdb.pipe.sh",
+        "debuggerPath": "${env:HOME}/bin/gdb.sh",
+        "pipeProgram": "${env:HOME}/bin/gdb.pipe.sh",
         "pipeArgs": ["*******", "${input:pickIP}", "${input:pickPID}"],
         "pipeCwd": ""
       },
@@ -42,8 +42,8 @@
         "traceResponse": true
       },
       "stopAtEntry": true,
-      "miDebuggerPath": "/media/nvme0n1p3/home/yan92617/bin/gdb.launch.sh",
-      "miDebuggerArgs": "'${input:pickIP} ${input:pickFile} /media/nvme0n1p3/home/yan92617/bin/gdb.sh'",
+      "miDebuggerPath": "${env:HOME}/bin/gdb.launch.sh",
+      "miDebuggerArgs": "'${input:pickIP} ${input:pickFile} ${env:HOME}/bin/gdb.sh'",
       "cwd": "${workspaceFolder}",
       "setupCommands": [
       ]
