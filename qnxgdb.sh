@@ -22,6 +22,7 @@ else
 	SOLIB=$ROOT/opt/lumentum/lib
 fi
 
+shopt -s nullglob
 cd $ROOT/opt/lumentum/lib/
 for i in lib*.so;do
 	ii=${i#lib}
@@ -35,7 +36,7 @@ cd -
 
 source ~/bin/build.vars
 if [ -n "$PID" ];then
-	vignu gdb $ROOT/$PRG -ex "target qnx $TARGET:8000" -ex "set nto-executable /$PRG" -ex "set solib-search-path $SOLIB" -ex "attach $PID"
+	vignu gdb $ROOT/$PRG -ex "target qnx $TARGET:8000" -ex "set nto-executable /$PRG" -ex "set solib-search-path $SOLIB" -ex "attach $PID" -x $HOME/bin/gdb.init --batch
 else
 	vignu gdb $ROOT/$PRG -ex "target qnx $TARGET:8000" -ex "set nto-executable /$PRG" -ex "set solib-search-path $SOLIB"
 fi

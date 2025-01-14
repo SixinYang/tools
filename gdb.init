@@ -1,23 +1,6 @@
-#set nto-e /tmp/targetPro
-#file ../bin/cliPro
-#set args --help
-
-target qnx 10.89.7.111:8000
-set nto-e /doc/OPERATOR/passwd
-
-set breakpoint pending on
-b fopen
-b open
-b fstat
-b stat
-b remove
-b rename
-#b main
-#commands
-#set solib-s .
-#b openpam_check_path_owner_perms
-#b fopen
-#b stat
-#b openpam_load_file
-#end
-
+b CEfmCard::handlePostSetPrimaryState
+commands
+bt
+c
+end
+c
