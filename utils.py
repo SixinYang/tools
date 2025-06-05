@@ -206,7 +206,7 @@ class Cp(Base):
         "setup_debug": "chmod a+x /doc/OPERATOR/qconn /doc/OPERATOR/pdebug; export LD_LIBRARY_PATH=/doc/OPERATOR:$LD_LIBRARY_PATH; export PATH=$PATH:/doc/OPERATOR; qconn",
         "check_files": "ls /doc/OPERATOR|xargs",
         "kill_prog": "pm -u {pname}; pm -k {pname}",
-        "run_prog": "pm -u {pname}; pm -k {pname}; export LD_LIBRARY_PATH=/doc/OPERATOR:$LD_LIBRARY_PATH; chmod a+rx /doc/OPERATOR/{target}; /doc/OPERATOR/{target} {args}",
+        "run_prog": "pm -u {pname}; pm -k {pname}; export LD_LIBRARY_PATH=/doc/OPERATOR:$LD_LIBRARY_PATH; chmod a+rx /doc/OPERATOR/{target}; /doc/OPERATOR/{target} {args} &",
         "get_info": '''PID=$(pm -P|grep "\s###\s"|cut -d\  -f2); NAME=$(ps -o pid,cmd|grep $PID|awk '{print $2}'); ARGS=$(ps -o pid,args|grep $PID|grep -v grep|awk '{$1=""; $2=""; print}'); echo ### $PID $NAME $ARGS'''
     }
 
@@ -257,6 +257,7 @@ class Cp(Base):
     def debug(self):
         pname = self.args.pname
         info = self._get_process_info(pname)
+        print("info: ", info)
         if info:
             pid, name, args = info
         else:
@@ -286,14 +287,16 @@ class Cp(Base):
 
         # upload is too slow sometimes, so check if the file is already there
         exist_files = self.telnet.execute_command(self.cmds['check_files'])
+        print("Needed files:", files)
         files = [file for file in files if os.path.basename(file) not in exist_files]
+        print("Coping files: ", files)
         for file in files:
             self.ftp.transfer_file(file, f'{os.path.basename(file)}')
 
 
 class Build(Base):
     cmds = {
-        "find_libs": "make -j16 -C {root} DEBUG=1 JDSU_PRODUCT={product} TOOLCHAIN={toolchain} src.files | grep '\s{program}\s' | cut -d\) -f1|cut -d\( -f2",
+        "find_libs": "unset QNX_HOST; make -j16 -C {root} DEBUG=1 JDSU_PRODUCT={product} TOOLCHAIN={toolchain} src.files | grep '\s{program}\s' | cut -d\) -f1|cut -d\( -f2",
     }
 
     def init(self):
@@ -312,9 +315,11 @@ class Build(Base):
     def dep(self):
         if not self.root:
             raise Exception("Root path not found")
+        print("Starting finding deps...")
         result = self.shell.execute_command(self.cmds['find_libs'].format(root=self.root,
             product=self.product, toolchain=self.toolchain, program=self.args.program))
         libs = result.stdout.split()
+        print("Finding deps Done: ", libs)
         libs = ["{root}/build/{product}/{toolchain}/rootfs/opt/lumentum/lib/{lib}.1".format(root=self.root, product=self.product, toolchain=self.toolchain, lib=lib) for lib in libs]
         return libs
 
