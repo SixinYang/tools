@@ -1,24 +1,9 @@
 #!/usr/bin/env bash
 
-log()
-{
-    echo "$(basename $0): $@" >> ~/gdb.log
-}
+PWD=$(dirname $(realpath $BASH_SOURCE))
+source $PWD/gdb.helper.sh
 
-if (( $# < 4 )); then
-    log "Usage: $0 <password> <IP> <PID> <cmd...>"
-    exit 1
-fi
-
-UTILS="python3 $HOME/bin/utils.py"
-PASSWORD=$1
-IP=$2
-PID=$3
-shift 3
-
-read CMD OTHERS  <<< $*
-log INPUT: cmd=$CMD ip=$IP pid=$PID raw="$*"
-
+parse_args
 CFG="--config invalid cp --host ${IP%:*} --telnet_username root --telnet_password $PASSWORD"
 
 if [ "$(basename $CMD)" == "gdb.sh" ]; then
@@ -28,13 +13,13 @@ if [ "$(basename $CMD)" == "gdb.sh" ]; then
         log "Can't find target command line for $PID"
         exit 1
     fi
-    log $* $IP $TARGET
-    exec $* -ex "target qnx $IP" -ex "set nto-e $TARGET"
+    #apply_template
+    run
 elif [ "$CMD" == "kill" ]; then
     # stop running process via third-party program
-    $UTILS $CFG run "$*"
+    $UTILS $CFG run "$CMD $ARGS"
     exit 0
 else
-    log "Unknow CMD: $*"
+    log "Unknow CMD: $CMD $ARGS"
     exit 1
 fi
