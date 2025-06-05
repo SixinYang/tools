@@ -15,8 +15,8 @@
       "additionalSOLibSearchPath": "${input:solibPath}",
       "processId": "${input:pickPID}",
       "pipeTransport": {
-        "debuggerPath": "${env:HOME}/bin/gdb.sh",
-        "pipeProgram": "${env:HOME}/bin/gdb.pipe.sh",
+        "debuggerPath": "${input:binPath}/gdb.sh",
+        "pipeProgram": "${input:binPath}/gdb.pipe.sh",
         "pipeArgs": ["${input:prjRootFS} ${input:pickIP} ${input:pickFile} ${input:pickPID}"],
         "pipeCwd": ""
       },
@@ -34,9 +34,9 @@
       // },
       "additionalSOLibSearchPath": "${input:solibPath}",
       "stopAtEntry": true,
-      "miDebuggerPath": "${env:HOME}/bin/gdb.launch.sh",
+      "miDebuggerPath": "${input:binPath}/gdb.launch.sh",
       "miDebuggerArgs": "'${input:prjRootFS} ${input:pickIP} ${input:pickFile} FakePID'",
-      "cwd": "/opt/lumentum-toolchains/dra821-qnx-R7.1.0_084/target/qnx7/aarch64le",
+      "cwd": "${input:sysRootFS}",
       "args": [
         // "-n","CIRCUIT_PACK.1.SYSTEM_INFORMATION.1","-a","SYSTEM_INFO","-g","GateSystemInfoReady"
         "-f", "-c", "/var/run/snmpd.server.conf", "-Lsd", "-Lf", "/dev/null", "-p", "/var/run/snmpd.pid",        
@@ -82,6 +82,18 @@
       "type": "command",
       "command": "extension.commandvariable.transform",
       "args": { "text": "${workspaceFolder}/build/rla1x5/dra821/debug_files" }
+    },
+    {
+      "id": "sysRootFS",
+      "type": "command",
+      "command": "extension.commandvariable.transform",
+      "args": { "text": "/opt/lumentum-toolchains/dra821-qnx-R7.1.0_084/target/qnx7/aarch64le" }
+    },
+    {
+      "id": "binPath",
+      "type": "command",
+      "command": "extension.commandvariable.transform",
+      "args": { "text": "${env:HOME}/bin" }
     }
   ]
 }
