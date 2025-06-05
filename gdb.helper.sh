@@ -14,6 +14,8 @@ fi
 
 log "Launching: $@"
 
+PWD=$(dirname $(realpath $BASH_SOURCE))
+
 # firstly collect all --opts into $ARGS variable
 for i in "$@"; do
     if [[ "$i" =~ ^--.* ]]; then
@@ -28,7 +30,7 @@ ARGS="${ARGS} $OTHERS"
 
 parse_args(){
 	PASSWORD=VaRoomA4
-	UTILS="python3 $HOME/bin/utils.py"
+	UTILS="python3 $PWD/utils.py"
 	SDK_ROOTFS="/opt/lumentum-toolchains/dra821-qnx-R7.1.0_084/target/qnx7/aarch64le"
 	GDB=$(dirname $(realpath $BASH_SOURCE))/gdb.sh
 	if [[ "$PRG" == "$SDK_ROOTFS"* ]]; then
@@ -40,12 +42,12 @@ parse_args(){
 }
 
 apply_template(){
-	sed "s|{{IP}}|$IP|g" $HOME/bin/gdb.helper > $HOME/bin/gdb.helper.apply
-	sed -i "s|{{SDK_ROOTFS}}|$SDK_ROOTFS|g" $HOME/bin/gdb.helper.apply
-	sed -i "s|{{PRJ_ROOTFS}}|$PRJ_ROOTFS|g" $HOME/bin/gdb.helper.apply
-	sed -i "s|{{ROOTFS}}|$ROOTFS|g" $HOME/bin/gdb.helper.apply
-	sed -i "s|{{PRG}}|$PRG|g" $HOME/bin/gdb.helper.apply
-	sed -i "s|{{TARGET}}|$TARGET|g" $HOME/bin/gdb.helper.apply
+	sed "s|{{IP}}|$IP|g" $PWD/gdb.helper > $PWD/gdb.helper.apply
+	sed -i "s|{{SDK_ROOTFS}}|$SDK_ROOTFS|g" $PWD/gdb.helper.apply
+	sed -i "s|{{PRJ_ROOTFS}}|$PRJ_ROOTFS|g" $PWD/gdb.helper.apply
+	sed -i "s|{{ROOTFS}}|$ROOTFS|g" $PWD/gdb.helper.apply
+	sed -i "s|{{PRG}}|$PRG|g" $PWD/gdb.helper.apply
+	sed -i "s|{{TARGET}}|$TARGET|g" $PWD/gdb.helper.apply
 }
 
 run(){
