@@ -12,12 +12,12 @@
       //   "trace": true,
       //   "traceResponse": true
       // },
-      "additionalSOLibSearchPath": "${workspaceFolder}/build/rla1x5/dra821/debug_files/opt/lumentum/lib:/opt/lumentum-toolchains/dra821-qnx-R7.1.0_084/target/qnx7/aarch64le/lib",
+      "additionalSOLibSearchPath": "${input:solibPath}",
       "processId": "${input:pickPID}",
       "pipeTransport": {
         "debuggerPath": "${env:HOME}/bin/gdb.sh",
         "pipeProgram": "${env:HOME}/bin/gdb.pipe.sh",
-        "pipeArgs": ["${workspaceFolder}/build/rla1x5/dra821/debug_files ${input:pickIP} ${input:pickFile} ${input:pickPID}"],
+        "pipeArgs": ["${input:prjRootFS} ${input:pickIP} ${input:pickFile} ${input:pickPID}"],
         "pipeCwd": ""
       },
     },
@@ -32,10 +32,10 @@
       //   "trace": true,
       //   "traceResponse": true
       // },
-      "additionalSOLibSearchPath": "${workspaceFolder}/build/rla1x5/dra821/debug_files/opt/lumentum/lib:/opt/lumentum-toolchains/dra821-qnx-R7.1.0_084/target/qnx7/aarch64le/lib",
+      "additionalSOLibSearchPath": "${input:solibPath}",
       "stopAtEntry": true,
       "miDebuggerPath": "${env:HOME}/bin/gdb.launch.sh",
-      "miDebuggerArgs": "'${workspaceFolder}/build/rla1x5/dra821/debug_files ${input:pickIP} ${input:pickFile} FakePID'",
+      "miDebuggerArgs": "'${input:prjRootFS} ${input:pickIP} ${input:pickFile} FakePID'",
       "cwd": "/opt/lumentum-toolchains/dra821-qnx-R7.1.0_084/target/qnx7/aarch64le",
       "args": [
         // "-n","CIRCUIT_PACK.1.SYSTEM_INFORMATION.1","-a","SYSTEM_INFO","-g","GateSystemInfoReady"
@@ -70,6 +70,18 @@
         "key": "PID",
         "description": "input target PID"
       }
+    },
+    {
+      "id": "solibPath",
+      "type": "command",
+      "command": "extension.commandvariable.transform",
+      "args": { "text": "${workspaceFolder}/build/rla1x5/dra821/debug_files/opt/lumentum/lib:/opt/lumentum-toolchains/dra821-qnx-R7.1.0_084/target/qnx7/aarch64le/lib:/opt/lumentum-toolchains/dra821-qnx-R7.1.0_084/target/qnx7/aarch64le/usr/lib" }
+    },
+    {
+      "id": "prjRootFS",
+      "type": "command",
+      "command": "extension.commandvariable.transform",
+      "args": { "text": "${workspaceFolder}/build/rla1x5/dra821/debug_files" }
     }
   ]
 }
