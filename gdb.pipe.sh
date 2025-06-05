@@ -14,6 +14,7 @@ if [ "$(basename $CMD)" == "gdb.sh" ]; then
         exit 1
     fi
     #apply_template
+    CMD=	# must override CMD variable to empty
     run
 elif [ "$CMD" == "kill" ]; then
     # stop running process via third-party program
