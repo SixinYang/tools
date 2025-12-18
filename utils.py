@@ -222,6 +222,9 @@ class Cp(Base):
                 "telnet_username": self.args.telnet_username,
                 "telnet_password": self.args.telnet_password,
             }
+        # use argument "host" override the config file's "host"
+        if self.args.host:
+            self.cfg["host"] = self.args.host
         if self.cfg.get("ftp_username"):
             self.ftp = FTPExecute(self.cfg["host"], self.cfg["ftp_port"], self.cfg["ftp_username"], self.cfg["ftp_password"])
         self.telnet = TelnetExecute(self.cfg["host"], self.cfg["telnet_port"], self.cfg["telnet_username"], self.cfg["telnet_password"])
