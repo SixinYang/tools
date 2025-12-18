@@ -8,7 +8,9 @@ CFG="--config invalid cp --host ${IP%:*} --telnet_username root --telnet_passwor
 
 if [ "$(basename $CMD)" == "gdb.sh" ]; then
     # transparent call to gdb program
-    TARGET=$($UTILS $CFG run "pidin -p $PID arg" | grep -a "$PID /"|awk '{print $2}')
+    TARGET=$($UTILS $CFG run "cat /proc/$PID/exefile|xargs echo")
+    #TARGET=$($UTILS $CFG run "pidin -p $PID arg" | grep -a "$PID /"|awk '{print $2}')
+    #TARGET="/opt/lumentum/bin/cliPro"
     if [ -z "$TARGET" ]; then
         log "Can't find target command line for $PID"
         exit 1
