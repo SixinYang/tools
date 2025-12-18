@@ -1,0 +1,1 @@
+docker run -it -e https_proxy=http://10.89.7.238:8118 -e USER=loadbuilder -e TOOLCHAIN_BASE_DIR=/root/toolchain -e BUILD_DIR=/root/build -v /media/sf_OttLoadBuild/nightlybuilds:/media/sf_OttLoadBuild/nightlybuilds ubuntu-dra821_a72_uboot_2021.01-with-toolchain:20.04.6 bash
